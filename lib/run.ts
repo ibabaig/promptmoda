@@ -49,7 +49,11 @@ function client(): GoogleGenAI {
         "It must NOT have a NEXT_PUBLIC_ prefix."
     );
   }
-  return new GoogleGenAI({ apiKey });
+  // A per-request cap. Without one, a stalled call hangs until the
+  // platform kills the whole function and the run is left "pending"
+  // forever with no reason recorded. 90s is long enough for a thinking
+  // model writing SVG, and three of them still fit inside maxDuration.
+  return new GoogleGenAI({ apiKey, httpOptions: { timeout: 90_000 } });
 }
 
 // Unknown placeholders are left in place, not blanked: a typo then shows
@@ -134,11 +138,13 @@ async function call(model: ModelChoice, prompt: string, image: RunInput["image"]
   parts.push({ text: prompt });
 
   const started = Date.now();
-  const response = await client().models.generateContent({
-    model: model.slug,
-    contents: [{ role: "user", parts }],
-    config: { temperature: model.temperature, maxOutputTokens: model.maxOutputTokens },
-  });
+  const response = await withRetry(() =>
+    client().models.generateContent({
+      model: model.slug,
+      contents: [{ role: "user", parts }],
+      config: { temperature: model.temperature, maxOutputTokens: model.maxOutputTokens },
+    })
+  );
 
   return {
     text: response.text?.trim() ?? "",
@@ -146,6 +152,25 @@ async function call(model: ModelChoice, prompt: string, image: RunInput["image"]
     usage: response.usageMetadata,
     durationMs: Date.now() - started,
   };
+}
+
+// The free tier answers "503 UNAVAILABLE: high demand" and "429" in
+// bursts that clear within seconds. Two retries with backoff turn most
+// of those into a slow run instead of a failed one. Anything else (bad
+// key, bad request) fails at once: retrying cannot fix it.
+const TRANSIENT = /\b(503|504|429|UNAVAILABLE|DEADLINE_EXCEEDED|RESOURCE_EXHAUSTED|high demand|overloaded)\b/i;
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  const waits = [2000, 6000];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (attempt >= waits.length || !TRANSIENT.test(msg)) throw e;
+      await new Promise((r) => setTimeout(r, waits[attempt]));
+    }
+  }
 }
 
 function silentReason(finishReason: string | null): string {
