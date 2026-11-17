@@ -47,8 +47,9 @@ Model-generated SVG is sanitised against an allowlist and rendered only through 
 
 1. Apply `supabase/011_prompt_chain_tool.sql` (after 010). Paste it whole into the SQL Editor.
 2. `cp .env.example .env.local` and fill in the Supabase URL, anon key and `GEMINI_API_KEY`.
-3. Add `https://<this-app>/auth/callback` to Supabase → Authentication → URL Configuration →
-   Redirect URLs.
+3. In Supabase → Authentication → URL Configuration → Redirect URLs, add
+   `https://promptmoda.vercel.app/**` and `https://promptmoda-*-humor-project1.vercel.app/**`
+   (the second covers commit-specific deployment URLs). Google sign-in returns to `/auth/callback`.
 4. `npm install && npm run dev` (port 3002).
 
 Next.js 16: `proxy.ts` replaces `middleware.ts`, and `params` / `searchParams` are Promises. See
