@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MoDA — Prompt Chains",
-  description: "Build, reorder and run the prompt chains behind the Museum of Digital Art.",
+  description: "Build, reorder and run the prompt chains behind the Museum of Digital Archives.",
   robots: { index: false, follow: false },
 };
 

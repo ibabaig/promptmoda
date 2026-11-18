@@ -1,7 +1,7 @@
 # MoDA — Prompt Chains
 
 The third MoDA app: a curator-only tool for building, reordering and running the prompt chains
-behind the Museum of Digital Art. Same Supabase project as the museum (`modagallery`) and the
+behind the Museum of Digital Archives. Same Supabase project as the museum (`modagallery`) and the
 admin area (`adminmoda`).
 
 ## What it does

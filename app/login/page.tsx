@@ -14,7 +14,7 @@ export default async function LoginPage({
   return (
     <main className="gate">
       <div className="gate-top">
-        <p className="eyebrow">Museum of Digital Art</p>
+        <p className="eyebrow">Museum of Digital Archives</p>
         <ThemeSwitch initial={theme} />
       </div>
       <h1>Prompt chains</h1>
